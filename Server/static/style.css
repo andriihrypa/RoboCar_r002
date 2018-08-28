@@ -1,0 +1,69 @@
+body {
+    background-image: url(img/carbon_fibre_big.png);
+}
+
+img {
+    position: relative;
+    left: 25%;
+}
+
+.control {
+    position: absolute;
+    top: 200px;
+    right: 50px;
+}
+
+.btn {
+    width: 95px;
+    height: 102px;
+    border: 0;
+    border-radius: 15px;
+    display: inline-block;
+}
+
+.btn:focus {
+    outline: none;
+}
+.btn:active {
+    box-shadow: 0 0 10px rgb(230, 0, 69);
+}
+
+.left-key {
+    background: url(img/arrowKeys_2.png);
+    background-position: 0 0;
+}
+
+.up-key {
+    background: url(img/arrowKeys_2.png);
+    background-position: 0 -102px;
+    display: block;
+    margin-left: 98px;
+    margin-bottom: 4px;
+}
+
+.right-key {
+    background: url(img/arrowKeys_2.png);
+    background-position: 0 -204px;
+}
+
+.down-key {
+    background: url(img/arrowKeys_2.png);
+    background-position: 0 -306px;
+}
+
+.brake-n-horn {
+    position: absolute;
+    top: 300px;
+    left: 50px;
+}
+
+.brake {
+    width: 190px;
+    background-image: url(img/brake.png);
+    margin-left: 5px;
+}
+
+.horn {
+    background-image: url(img/horn.png);
+}
+
