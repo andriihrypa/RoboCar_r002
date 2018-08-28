@@ -1,16 +1,14 @@
 from flask import Flask, render_template, Response, json, request, jsonify
-
-# Raspberry Pi camera module (requires picamera package, developed by Miguel Grinberg)
 from camera_pi import Camera
-import RPi.GPIO as GPIO
 from i2c_pwm import *
-import time
+import RPi.GPIO as GPIO
 
 app = Flask(__name__)
 
 GPIO.setmode(GPIO.BCM)
 
-# Create a dictionary called pins to store the pin number, name, and pin state:
+# Create a dictionary called pins to store the pin number, name, and pin state.
+# Will be used for Horn button
 # pins = {
 # 	23: {'name': 'GPIO 23', 'state': GPIO.LOW},
 # 	24: {'name': 'GPIO 24', 'state': GPIO.LOW}
@@ -50,101 +48,53 @@ def car_state():
 	left_btn_pressed_time = int(data['left_btn_pressed_time'])
 	right_btn_pressed_time = int(data['right_btn_pressed_time'])
 	down_btn_pressed_time = int(data['down_btn_pressed_time'])
-	# space_btn_press_state = bool(data['space_btn_press_state'])
+	space_btn_press_state = bool(data['space_btn_press_state'])
 	# horn_btn_press_state = bool(data['horn_btn_press_state'])
 
 	# TODO add validation!!!
 
-	car = Car(5)
-	direction = 'f'
-	if (up_btn_pressed_time - down_btn_pressed_time) < 0:
-		direction = 'b'
-	left_side_parameter = 0
-	right_side_parameter = 0
-	if direction == 'f':
-		left_side_parameter = up_btn_pressed_time - left_btn_pressed_time
-		right_side_parameter = up_btn_pressed_time - right_btn_pressed_time
-	elif direction == 'b':
-		left_side_parameter = down_btn_pressed_time - left_btn_pressed_time
-		right_side_parameter = down_btn_pressed_time - right_btn_pressed_time
-	if left_side_parameter < 0:
+	if space_btn_press_state:
+		car = Car(5)
+		car.left_side_direction = '0'
+		car.left_side_pwm = 0
+		car.right_side_direction = '0'
+		car.right_side_pwm = 0
+		car.send_parcel()
+	else:
+		car = Car(5)
+		direction = 'f'
+		if (up_btn_pressed_time - down_btn_pressed_time) < 0:
+			direction = 'b'
 		left_side_parameter = 0
-	if right_btn_pressed_time < 0:
 		right_side_parameter = 0
-	left_side_pwm = calcPwm(left_side_parameter)
-	right_side_pwm = calcPwm(right_side_parameter)
-	car.left_side_direction = direction
-	car.left_side_pwm = left_side_pwm
-	car.right_side_direction = direction
-	car.right_side_pwm = right_side_pwm
-	car.send_parcel()
-	# time.sleep(0.2)
-	# car.send_parcel()
+		if direction == 'f':
+			left_side_parameter = up_btn_pressed_time - left_btn_pressed_time
+			right_side_parameter = up_btn_pressed_time - right_btn_pressed_time
+		elif direction == 'b':
+			left_side_parameter = down_btn_pressed_time - left_btn_pressed_time
+			right_side_parameter = down_btn_pressed_time - right_btn_pressed_time
+		if left_side_parameter < 0:
+			left_side_parameter = 0
+		if right_btn_pressed_time < 0:
+			right_side_parameter = 0
+		left_side_pwm = calc_pwm(left_side_parameter)
+		right_side_pwm = calc_pwm(right_side_parameter)
+		car.left_side_direction = direction
+		car.left_side_pwm = left_side_pwm
+		car.right_side_direction = direction
+		car.right_side_pwm = right_side_pwm
+		car.send_parcel()
+		return jsonify(42)
 
-	# print('{0} {1} {2} {3} {4} {5}'.format(up_btn_pressed_time,
-	# 									   left_btn_pressed_time,
-	# 									   right_btn_pressed_time,
-	# 									   down_btn_pressed_time,
-	# 									   space_btn_press_state,
-	# 									   horn_btn_press_state))
 
-	return jsonify(42)
-	# return json.dump({'{0} {1} {2} {3} {4} {5}'.format(up_btn_pressed_time,
-	# 												   left_btn_pressed_time,
-	# 												   right_btn_pressed_time,
-	# 												   down_btn_pressed_time,
-	# 												   space_btn_press_state,
-	# 												   horn_btn_press_state)})
-	# GPIO.output(23, GPIO.HIGH)
-	#
-	# car = Car(5)
-	# pwm_value = int(request.get_data())
-	# car.left_side_direction = 'b'
-	# car.left_side_pwm = pwm_value
-	# car.right_side_direction = 'b'
-	# car.right_side_pwm = pwm_value
-	# car.send_parcel()
-	# time.sleep(0.5)
-	# car.send_parcel()
-
-# @app.route('/turn_off_LED1')
-# def turn_off_LED1():
-# 	GPIO.output(23, GPIO.LOW)
-# 	# return json.dump({'status: ok'})
-#
-#
-# @app.route('/turn_on_LED2')
-# def turn_on_LED2():
-# 	GPIO.output(24, GPIO.HIGH)
-# 	# return json.dump({'status: ok'})
-#
-#
-# @app.route('/turn_off_LED2')
-# def turn_off_LED2():
-# 	GPIO.output(24, GPIO.LOW)
-# 	# return json.dump({'status: ok'})
-#
-#
-# @app.route('/set_pwm', methods=['POST'])
-# def set_pwm():
-# 	car = Car(5)
-# 	pwm_value = int(request.get_data())
-# 	car.left_side_direction = 'f'
-# 	car.left_side_pwm = pwm_value
-# 	car.right_side_direction = 'f'
-# 	car.right_side_pwm = pwm_value
-#
-# 	car.send_parcel()
-# 	time.sleep(0.5)
-# 	car.send_parcel()
-
-def calcPwm(parameter):
+def calc_pwm(parameter):
 	if parameter <= 100:
 		return 0
 	result = int((parameter * 0.13) + 120)
 	if result > 250:
 		result = 250
 	return result
+
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
